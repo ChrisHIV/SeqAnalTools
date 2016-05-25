@@ -11,6 +11,7 @@ prints the length of each sequence found therein, optionally ignoring gaps.'''
 import argparse
 import os
 import sys
+import string
 from Bio import SeqIO
 
 # Define a function to check files exist, as a type for the argparse.
@@ -25,6 +26,8 @@ parser = argparse.ArgumentParser(description=ExplanatoryMessage)
 parser.add_argument('FastaFile', type=File)
 parser.add_argument('-g', '--include-gaps', action='store_true', \
 help='include gap characters, "-" and "?", ignored by default')
+parser.add_argument('-C', '--ignore-lower-case', action='store_true', \
+help="Doesn't count lower case letters.")
 args = parser.parse_args()
 
 
@@ -32,6 +35,8 @@ SeqLengths = []
 for seq in SeqIO.parse(open(args.FastaFile),'fasta'):
   if not args.include_gaps:
     seq.seq = seq.seq.ungap("-").ungap("?")
+  if args.ignore_lower_case:
+    seq.seq = ''.join(x for x in seq.seq if not x.islower())
   SeqLengths.append([seq.id, len(seq.seq)])
 
 for [SeqName,SeqLength] in SeqLengths:
