@@ -8,9 +8,10 @@ from __future__ import print_function
 ExplanatoryMessage = '''Calculates the similarity of every other sequence to
 one named sequence in a fasta-format alignment. Comparing each other sequence in
 turn we find the number of matching bases in the region of the alignment
-covered by both sequences, the length of that region, and the ratio of the
-former to the latter i.e. the fractional identity in the overlap. Results are
-printed sorted by this ratio. (For non-overlap this ratio is 0/0: we report 0.)
+covered by both sequences (ignoring missing coverage - "?" positions), the
+length of that region, and the ratio of the former to the latter i.e. the
+fractional identity in the overlap. Results are printed to stdout, in csv
+format, sorted by this ratio. (For non-overlap this ratio is 0/0: we report 0.)
 '''
 
 import argparse
@@ -36,6 +37,9 @@ parser.add_argument('ChosenSeq')
 parser.add_argument('-C', '--case-sensitive', action='store_true', \
 help='consider upper- and lower-case occurences of the same base to be '+\
 'unequal, e.g. A != a. (By default, case is ignored.)')
+parser.add_argument('-I', '--indels-only', action='store_true', \
+help='Only count differences in insertions and deletions as differences, '+\
+'not base changes.')
 args = parser.parse_args()
 
 # For brevity & speed
@@ -100,15 +104,22 @@ for seq in alignment:
   OverlapStart = max(ThisSeqStart, ChosenSeqStart)
   OverlapEnd   = min(ThisSeqEnd,   ChosenSeqEnd)
   NumAgreeing = 0
-  if OverlapStart > OverlapEnd:
-    FractionalSimilarity = 0
-  else:
+  overlap = 0
+  if OverlapEnd >= OverlapStart:
     for ChosenSeqBase, ThisSeqBase in itertools.izip( \
     ChosenSeq[OverlapStart:OverlapEnd+1], ThisSeq[OverlapStart:OverlapEnd+1]):
+      if ChosenSeqBase == '?' or ThisSeqBase == '?':
+        continue
+      overlap += 1
       if ChosenSeqBase == ThisSeqBase:
         NumAgreeing += 1
-    overlap = OverlapEnd - OverlapStart + 1
-  SimilaritiesDict[seq.id] = [NumAgreeing, overlap, float(NumAgreeing)/overlap]
+      elif args.indels_only and ChosenSeqBase != '-' and ThisSeqBase != '-':
+        NumAgreeing += 1
+  if overlap == 0:
+    FractionalSimilarity = 0
+  else:
+    FractionalSimilarity = float(NumAgreeing)/overlap
+  SimilaritiesDict[seq.id] = [NumAgreeing, overlap, FractionalSimilarity]
 
 # Sort by fractional identity
 output = '"sequence","number of positions agreeing with ' + args.ChosenSeq + \
