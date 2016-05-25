@@ -196,6 +196,20 @@ prints the length of each sequence found therein, optionally ignoring gaps.'''
 
 
 
+RankSequencesBySimilarityToOne.py 
+
+## Overview:
+ExplanatoryMessage = '''Calculates the similarity of every other sequence to
+one named sequence in a fasta-format alignment. Comparing each other sequence in
+turn we find the number of matching bases in the region of the alignment
+covered by both sequences (ignoring missing coverage - "?" positions), the
+length of that region, and the ratio of the former to the latter i.e. the
+fractional identity in the overlap. Results are printed to stdout, in csv
+format, sorted by this ratio. (For non-overlap this ratio is 0/0: we report 0.)
+'''
+
+
+
 RemoveColumnsFromAlignment.py 
 
 ## Overview:
