@@ -28,7 +28,10 @@ from Bio import SeqIO
 parser = OptionParser()
 parser.add_option("-A", action="store_true", dest="AlignmentCoords",
 default=False,
-help="specify that the coordinates are with respect to the alignment")
+help="specify that the input coordinates are with respect to the alignment")
+parser.add_option("-O", action="store_true", dest='AlignmentOutput', \
+default=False, help="Output alignment coordinates only, not the coordinates"+\
+" with respect to every other sequence. (Cannot be used with -A).")
 (options, args) = parser.parse_args()
 
 # Check this file is called from the command line with the correct number of
@@ -53,6 +56,10 @@ else:
 if not os.path.isfile(AlignmentFile):
   print(AlignmentFile, 'does not exist or is not a file. Quitting.', \
   file=sys.stderr)
+  exit(1)
+
+if options.AlignmentCoords and options.AlignmentOutput:
+  print('-A and -O cannot be used together. Quitting.', file=sys.stderr)
   exit(1)
 
 # Try to understand the coordinates as integers. Check they're positive. Sort.
@@ -142,6 +149,9 @@ else:
     file=sys.stderr)
     exit(1)
 
+  if options.AlignmentOutput:
+    print(' '.join(map(str,[coord+1 for coord in CoordsInAlignment_ZeroBased])))
+    exit(0)
 
 # Translate those coordinates to the other sequences. Put -1 for a coordinate
 # occuring before the start and NaN for a coordinate occuring after the end.
