@@ -20,7 +20,7 @@
 ################################################################################
 ## USER INPUT
 # Characters that indicates a gap (missing base)
-GapChars = '-.?'
+GapChars = '-?'
 ################################################################################
 
 # Import what's needed
@@ -183,7 +183,9 @@ if options.AlignmentCoords:
 
 # Now convert those primer positions, which were with respect to the alignment,
 # into positions with respect to each reference.
-# TODO: update comment
+# For each primer, sorted left to right, count how many bases to the left
+# (ignoring gaps). Only count once through the genome, stopping and restarting
+# when we get to each primer.
 PositionsDict = {}
 for SeqName, seq in SeqDict.items():
   PositionsWRTseq = []
