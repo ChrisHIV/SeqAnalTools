@@ -1,4 +1,5 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
+from __future__ import print_function
 
 ## Author: Chris Wymant, c.wymant@imperial.ac.uk
 ## Acknowledgement: I wrote this while funded by ERC Advanced Grant PBDR-339251 
@@ -24,6 +25,7 @@ GapChars = '-?'
 ################################################################################
 
 # Import what's needed
+import sys
 from optparse import OptionParser
 import os.path, collections
 from AuxiliaryFunctions import ReadSequencesFromFile, IUPACdict, BaseMatch
@@ -40,13 +42,13 @@ action="store_true", default=False, help='print out the primer positions just'+\
 # Check this file is called from the command line with the correct number of
 # arguments, and that the specified file(s) exist.
 if len(args) != 2:
-  print 'Two arguments are required: firstly the alignment file, and secondly',\
-  'the chosen reference therein.\nQuitting.'
+  print('Two arguments are required: firstly the alignment file, and secondly',\
+  'the chosen reference therein.\nQuitting.', file=sys.stderr)
   exit(1)
 AlignmentFile = args[0]
 ChosenRef     = args[1]
 if not os.path.isfile(AlignmentFile):
-  print AlignmentFile, 'does not exist or is not a file.'
+  print(AlignmentFile, 'does not exist or is not a file.', file=sys.stderr)
   exit(1)
 
 # If no start primers were specified or no end primers, make empty lists for
@@ -60,8 +62,8 @@ if EndPrimers == None:
 
 # Check that at least one primer was specified
 if len(StartPrimers) == 0 and len(EndPrimers) == 0:
-  print 'At least one primer is required, specified using the -S or -E',\
-  'options.\nQuitting.'
+  print('At least one primer is required, specified using the -S or -E',\
+  'options.\nQuitting.', file=sys.stderr)
   exit(1)
 
 # Convert the primers to upper case, check they don't contain gaps (that would
@@ -71,16 +73,16 @@ for PrimerList in [StartPrimers,EndPrimers]:
     PrimerList[i] = PrimerList[i].upper()
     for GapChar in GapChars:
       if GapChar in PrimerList[i]:
-        print 'Primer', PrimerList[i], 'contains a gap. This is unexpected.'+\
-        '\nQuitting.'
+        print('Primer', PrimerList[i], 'contains a gap. This is unexpected.'+\
+        '\nQuitting.', file=sys.stderr)
         exit(1)
   CounterObject = collections.Counter(PrimerList)
   DuplicatedPrimers = [i for i in CounterObject if CounterObject[i]>1]
   if len(DuplicatedPrimers) != 0:
     for DuplicatedPrimer in DuplicatedPrimers:
-      print 'Primer', DuplicatedPrimer, 'was specified twice with the same',\
-      'option.'
-    print 'Quitting.'
+      print('Primer', DuplicatedPrimer, 'was specified twice with the same',\
+      'option.', file=sys.stderr)
+    print('Quitting.', file=sys.stderr)
     exit(1)
 
 # Read in the sequences from the alignment file (into a dictionary)
@@ -88,7 +90,8 @@ SeqDict, AlignmentLength = ReadSequencesFromFile(AlignmentFile)
 
 # Check the chosen reference is in the alignment
 if not ChosenRef in SeqDict:
-  print 'Could not find', ChosenRef, 'in', AlignmentFile+'.\nQuitting.'
+  print('Could not find', ChosenRef, 'in', AlignmentFile+'.\nQuitting.',
+  file=sys.stderr)
   exit(1)
 ChosenRefSeq = SeqDict[ChosenRef]
 
@@ -121,8 +124,8 @@ for PositionMin1 in range(AlignmentLength-1,-1,-1):
 if not AllPrimersShorterThanRef:
   OverlyLongPrimers = [primer for primer in AllUniquePrimers if not primer in \
   PrimerLastChancesForMatch]
-  print 'The following primers are longer than', ChosenRef+':', \
-  ' '.join(OverlyLongPrimers) +'\nQuitting.'
+  print('The following primers are longer than', ChosenRef+':', \
+  ' '.join(OverlyLongPrimers) +'\nQuitting.', file=sys.stderr)
   exit(1)
 
 # Find the primers in the chosen reference sequence, converted to upper case.
@@ -152,8 +155,8 @@ for PositionMin1,base in enumerate(ChosenRefSeq):
         if matches == length:
           # Found the primer!
           if primer in StartPrimerPositions or primer in EndPrimerPositions:
-            print 'Encountered primer', primer, 'a second time in',ChosenRef+ \
-            '. Primers should be unique.\nQuitting.'
+            print('Encountered primer', primer, 'a second time in',ChosenRef+ \
+            '. Primers should be unique.\nQuitting.', file=sys.stderr)
             exit(1)
           if primer in StartPrimers:
             StartPrimerPositions[primer] = PositionMin1 +1
@@ -166,8 +169,8 @@ for PositionMin1,base in enumerate(ChosenRefSeq):
 MissingPrimers = [primer for primer in AllUniquePrimers if \
 (not primer in StartPrimerPositions) and (not primer in EndPrimerPositions)]
 if len(MissingPrimers) != 0:
-  print 'Unable to find', ' or '.join(MissingPrimers), 'in', ChosenRef+\
-  '.\nQuitting.'
+  print('Unable to find', ' or '.join(MissingPrimers), 'in', ChosenRef+\
+  '.\nQuitting.', file=sys.stderr)
   exit(1)
 
 # Merge the start and end positions into a single sorted list, each value being
@@ -178,7 +181,7 @@ EndPrimerPositions.items()]
 SortedList = sorted(SortedList, key=lambda item: item[1])
 
 if options.AlignmentCoords:
-  print ' '.join(str(value) for key,value in SortedList)
+  print(' '.join(str(value) for key,value in SortedList))
   exit(0)
 
 # Now convert those primer positions, which were with respect to the alignment,
@@ -209,8 +212,8 @@ for SeqName, seq in SeqDict.items():
   PositionsDict[SeqName] = PositionsWRTseq
 
 # Print output, with an explanatory header line beginning with a hash.
-print '# name ', '  '.join([str(item[0]) for item in SortedList])
+print('# name ', '  '.join([str(item[0]) for item in SortedList]))
 for SeqName in sorted(PositionsDict.keys()):
-  print SeqName, ' '.join(map(str,PositionsDict[SeqName]))
+  print(SeqName, ' '.join(map(str,PositionsDict[SeqName])))
 
 
