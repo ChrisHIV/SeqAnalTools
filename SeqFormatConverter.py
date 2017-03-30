@@ -5,8 +5,9 @@ from __future__ import print_function
 ## Acknowledgement: I wrote this while funded by ERC Advanced Grant PBDR-339251
 ##
 ## Overview:
-ExplanatoryMessage = '''This script converts sequence data between formats.
-Output is printed to stdout.'''
+ExplanatoryMessage = '''This script converts sequence data between formats; it
+is a simple command-line wrapper for Bio.SeqIO's convert function. Output is
+printed to stdout, suitable for redirection to a file.'''
 
 import argparse
 import os
