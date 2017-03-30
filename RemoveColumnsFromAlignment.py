@@ -42,10 +42,10 @@ CounterObject = collections.Counter(PositionsToRemove)
 DuplicatedPositionsToRemove = [pos for pos in CounterObject if \
 CounterObject[pos] > 1]
 if len(DuplicatedPositionsToRemove) != 0:
-  print('The following coordinates were multiply specified:', \
-  ', '.join(map(str,DuplicatedPositionsToRemove)) +'. All arguments should be', \
-  'unique. Quitting.', file=sys.stderr)
-  exit(1)
+  print('Warning: the following coordinates were multiply specified and have', 
+  'only been counted once:', ', '.join(map(str,DuplicatedPositionsToRemove)),
+  file=sys.stderr)
+  PositionsToRemove = list(set(PositionsToRemove))
 
 # Read in the alignment
 AlignmentLength = None
