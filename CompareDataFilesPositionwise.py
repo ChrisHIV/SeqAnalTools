@@ -69,6 +69,8 @@ help='The minimum value of the integer that we should encounter.')
 parser.add_argument('MissingDatumValue', type=float, \
 help='The value of the datum to be used for lines that are missing.')
 parser.add_argument('DataFile', nargs='+')
+parser.add_argument('-D', '--delimiter', default=None, help='''Used to specify a
+different delimiter for the data files (the default is whitespace).''')
 args = parser.parse_args()
 
 # Relabelling for brevity
@@ -103,8 +105,8 @@ for DataFile in DataFiles:
 
       EndingForErrorMessage = 'on line\n' + line +'in '+ DataFile+'.\nQuitting'
 
-      # split line into fields by whitespace
-      fields = line.split()
+      # split line into fields
+      fields = line.split(args.delimiter)
 
       # Try to get the columns we want
       try:
