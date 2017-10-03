@@ -5,18 +5,20 @@ from __future__ import print_function
 ## Acknowledgement: I wrote this while funded by ERC Advanced Grant PBDR-339251 
 ##
 ## Overview: TODO
-## Usage: call this script from the command line with the first argument being
-## the alignment file, the second argument being the name of the chosen
-## reference, and at least one primer: each primer coming after either -S
-## (indicating that you want the position of the start of the primer) or -E
-## (you want the position of the end of the primer).
-## e.g. using the following options (without the line break of course)
-## -E AAAATGATAGGRGGAATTGGAGG -S GGGAAGTGAYATAGCWGGAAC -E GAYTATGGAAAACAGATGGCAG
-## -S TTAAAAGAAAAGGGGGGATTGGG -E CGCTGACGGTACARGCCA -S CCTATGGCAGGAAGAAGCG
-## will return the start/end locations of these six primers, which are the
-## primers of Gall et al. doi:10.1128/JCM.01516-12  
-## Positions before a sequence begins are given as 1; positions after a sequence
-## ends are given as the final position in that sequence.
+ExplanatoryMessage = '''This script finds specified sub-sequences inside a
+sequence alignment, and reports their positions with respect to all sequences
+present (or optionally just with respect to the alignment coordinates).
+e.g. for the alignment
+seq1 = -AA-CCGAA-,
+seq2 = -AATT--AA-,
+seq3 = GAATC-GAAG
+the subsequence "CCG" in seq1 has start position 3 with respect to seq1, 4 with
+respect to seq2, 5 with respect to seq3, and 5 with respect to the alignment; it
+has end position 5 with respect to seq1, 4 with respect to seq2 (really it's
+between 4 and 5; we report 4), 6 with respect to seq3, and 7 with respect to
+the alignment. Positions before a sequence begins are given as 1; positions
+after a sequence ends are given as the final position in that sequence.
+'''
 ##
 ################################################################################
 ## USER INPUT
@@ -26,35 +28,43 @@ GapChars = '-?'
 
 # Import what's needed
 import sys
-from optparse import OptionParser
+import argparse
 import os.path, collections
 from AuxiliaryFunctions import ReadSequencesFromFile, IUPACdict, BaseMatch
 
-# Define the arguments and options
-parser = OptionParser()
-parser.add_option("-S", "--start", action="append", type="str")
-parser.add_option("-E", "--end", action="append", type="str")
-parser.add_option("-A", "--alignment-coords", dest='AlignmentCoords', \
-action="store_true", default=False, help='print out the primer positions just'+\
-' as coordinates with respect to the alignment')
-(options, args) = parser.parse_args()
+# Define a function to check files exist, as a type for the argparse.
+def File(MyFile):
+  if not os.path.isfile(MyFile):
+    raise argparse.ArgumentTypeError(MyFile+' does not exist or is not a file.')
+  return MyFile
 
-# Check this file is called from the command line with the correct number of
-# arguments, and that the specified file(s) exist.
-if len(args) != 2:
-  print('Two arguments are required: firstly the alignment file, and secondly',\
-  'the chosen reference therein.\nQuitting.', file=sys.stderr)
-  exit(1)
-AlignmentFile = args[0]
-ChosenRef     = args[1]
-if not os.path.isfile(AlignmentFile):
-  print(AlignmentFile, 'does not exist or is not a file.', file=sys.stderr)
-  exit(1)
+parser = argparse.ArgumentParser(description=ExplanatoryMessage)
+parser.add_argument('alignment', type=File)
+parser.add_argument('NameOfChosenSeq', help='''The name of the sequence
+containing the chosen sub-sequence.''')
+parser.add_argument("-S", "--start", action='append', help='''Use this to
+specify a sub-sequence whose start coordinate you want. (You can 
+use this option multiple times to specify multiple sub-sequences e.g. -S AAAC -S
+AAAT ...)''')
+parser.add_argument("-E", "--end", action='append', help='''Use this to
+specify a sub-sequence whose end coordinate you want. (You can use
+this option multiple times to specify multiple sub-sequences e.g. -E AAAC -E
+AAAT ...)'''))
+parser.add_argument("-A", "--alignment-coords", dest='AlignmentCoords', \
+action="store_true", help='''Print out the sub-sequence positions just with
+respect to the alignment, instead of with respect to every sequence in the
+alignment. NOTE: all positions will printed out simply in numerical order.''')
+args = parser.parse_args()
+
+
+AlignmentFile = args.alignment
+ChosenRef = args.NameOfChosenSeq
+
 
 # If no start primers were specified or no end primers, make empty lists for
 # convenience.
-StartPrimers = options.start
-EndPrimers = options.end
+StartPrimers = args.start
+EndPrimers = args.end
 if StartPrimers == None:
   StartPrimers = []
 if EndPrimers == None:
@@ -62,7 +72,7 @@ if EndPrimers == None:
 
 # Check that at least one primer was specified
 if len(StartPrimers) == 0 and len(EndPrimers) == 0:
-  print('At least one primer is required, specified using the -S or -E',\
+  print('At least one SubSeq is required, specified using the -S or -E',\
   'options.\nQuitting.', file=sys.stderr)
   exit(1)
 
@@ -73,14 +83,14 @@ for PrimerList in [StartPrimers,EndPrimers]:
     PrimerList[i] = PrimerList[i].upper()
     for GapChar in GapChars:
       if GapChar in PrimerList[i]:
-        print('Primer', PrimerList[i], 'contains a gap. This is unexpected.'+\
+        print('SubSeq', PrimerList[i], 'contains a gap. This is unexpected.'+\
         '\nQuitting.', file=sys.stderr)
         exit(1)
   CounterObject = collections.Counter(PrimerList)
   DuplicatedPrimers = [i for i in CounterObject if CounterObject[i]>1]
   if len(DuplicatedPrimers) != 0:
     for DuplicatedPrimer in DuplicatedPrimers:
-      print('Primer', DuplicatedPrimer, 'was specified twice with the same',\
+      print('SubSeq', DuplicatedPrimer, 'was specified twice with the same',\
       'option.', file=sys.stderr)
     print('Quitting.', file=sys.stderr)
     exit(1)
@@ -124,7 +134,7 @@ for PositionMin1 in range(AlignmentLength-1,-1,-1):
 if not AllPrimersShorterThanRef:
   OverlyLongPrimers = [primer for primer in AllUniquePrimers if not primer in \
   PrimerLastChancesForMatch]
-  print('The following primers are longer than', ChosenRef+':', \
+  print('The following SubSeqs are longer than', ChosenRef+':', \
   ' '.join(OverlyLongPrimers) +'\nQuitting.', file=sys.stderr)
   exit(1)
 
@@ -155,8 +165,8 @@ for PositionMin1,base in enumerate(ChosenRefSeq):
         if matches == length:
           # Found the primer!
           if primer in StartPrimerPositions or primer in EndPrimerPositions:
-            print('Encountered primer', primer, 'a second time in',ChosenRef+ \
-            '. Primers should be unique.\nQuitting.', file=sys.stderr)
+            print('Encountered SubSeq', primer, 'a second time in',ChosenRef+ \
+            '. SubSeqs should be unique.\nQuitting.', file=sys.stderr)
             exit(1)
           if primer in StartPrimers:
             StartPrimerPositions[primer] = PositionMin1 +1
@@ -180,7 +190,7 @@ StartPrimerPositions.items()] + [['end_of_'+primer,value] for primer,value in \
 EndPrimerPositions.items()]
 SortedList = sorted(SortedList, key=lambda item: item[1])
 
-if options.AlignmentCoords:
+if args.AlignmentCoords:
   print(' '.join(str(value) for key,value in SortedList))
   exit(0)
 
