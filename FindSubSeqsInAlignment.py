@@ -49,7 +49,7 @@ AAAT ...)''')
 parser.add_argument("-E", "--end", action='append', help='''Use this to
 specify a sub-sequence whose end coordinate you want. (You can use
 this option multiple times to specify multiple sub-sequences e.g. -E AAAC -E
-AAAT ...)'''))
+AAAT ...)''')
 parser.add_argument("-A", "--alignment-coords", dest='AlignmentCoords', \
 action="store_true", help='''Print out the sub-sequence positions just with
 respect to the alignment, instead of with respect to every sequence in the
