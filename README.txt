@@ -29,26 +29,13 @@ CalculateEntropy.py
 
 
 
-CallConsensus.py 
+CombineContigsFrom2HiseqLanes.py 
 
 ## Overview:
-ExplanatoryMessage = '''
-This script interprets a base frequency file of the format produced
-by AnalysePileup.py and calls the consensus sequence.
-Usage: call it from the command line with the first argument being a base
-frequency file, the second argument being the minimum number of reads in
-agreement with each other before a base is called, and the third argument
-being the minimum number of reads in agreement with each other before upper
-case is used for the base present.'''
-
-
-
-CheckFastaFileEquality.py 
-
-## Overview:
-ExplanatoryMessage = '''This script checks that all fasta files supplied as
-arguments contain the same sequences, regardless of formatting. It exits with
-exit code 111 if any difference is found.'''
+ExplanatoryMessage = '''This script merges all contigs assembled from two Hiseq
+lanes, each labelled with a Sanger Institute lane ID, into a single new fasta
+file with uniquely labelled contigs (replacing _1_ and _2_ with _3_, and
+appending _r for contigs coming from the _2_ lane).'''
 
 
 
@@ -86,24 +73,6 @@ specified larger taxon, N/A is printed.'''
 
 
 
-FindContaminantReadPairs.py 
-
-## Overview: this script reads in one blast file of hits for forward reads and
-## one for backward reads (from paired-read data). It finds read pairs for which
-## either a) both reads blast to something other than the named sequence, or b)
-## one read blasts to the named sequence and its mate blasts to something else
-## but that second blast has a better evalue. The names of the reads in these
-## pairs are written, without preserving their original order, to two files: one
-## for forward reads and one for reverse reads.
-## The intended use is for processing the result of blasting paired-read data
-## to a database consisting of something that looks like your sample plus other
-## sequences that should be recognised as contamination. (For example, if de
-## novo assembly has been done with these reads, some of the resulting contigs
-## may be identified as contamination -- we want to find the reads that
-## correspond to those contigs, in order to remove them.)
-
-
-
 FindInsertSizeSpikes.py 
 
 ## Overview:
@@ -115,18 +84,6 @@ intended purpose is to find cases where one read pair has been exactly
 duplicated a large number of times, leading to a spike in an otherwise smooth
 insert-size distribution.
 '''
-
-
-
-FindNamedReadsInSortedFastq.py 
-
-## Overview: takes a fastq file sorted by read name, e.g. with
-## $ cat MyReads.fq | paste - - - - | sort -k1,1 -t " " | tr "\t" "\n" > out.fq
-## and a file of read names sorted in the same way (one read name per line), and
-## finds those reads, printing them to the screen suitable for redirection into
-## another fastq file.
-## Usage:
-## $ FindNamedReadsInSortedFastq.py AllReadsSorted.fastq ReadNamesIwant.txt
 
 
 
@@ -144,29 +101,13 @@ O(N^2) runtime for N sequences by improving speed 50-fold.)
 
 
 
-FindPrimersInAlignment.py 
-
-## Overview: TODO
-## Usage: call this script from the command line with the first argument being
-## the alignment file, the second argument being the name of the chosen
-## reference, and at least one primer: each primer coming after either -S
-## (indicating that you want the position of the start of the primer) or -E
-## (you want the position of the end of the primer).
-## e.g. using the following options (without the line break of course)
-## -E AAAATGATAGGRGGAATTGGAGG -S GGGAAGTGAYATAGCWGGAAC -E GAYTATGGAAAACAGATGGCAG
-## -S TTAAAAGAAAAGGGGGGATTGGG -E CGCTGACGGTACARGCCA -S CCTATGGCAGGAAGAAGCG
-## will return the start/end locations of these six primers, which are the
-## primers of Gall et al. doi:10.1128/JCM.01516-12  
-## Positions before a sequence begins are given as 1; positions after a sequence
-## ends are given as the final position in that sequence.
-
-
-
-FindSeqsInFasta.py 
+FindUniqueInsertions.py 
 
 ## Overview:
-ExplanatoryMessage = '''This script retrieves searched-for sequences from a
-fasta file. Output is printed to stdout in fasta format, with options to invert the search, extract a window of alignment, and strip gaps (call with --help for details).'''
+ExplanatoryMessage = '''Given an alignment of sequences, this script prints the
+(one-based) coordinates of positions (if any exist) at which a named sequence
+has unique insertions, i.e. positions where only that sequence has bases, all
+other sequences have gaps. '''
 
 
 
@@ -202,11 +143,10 @@ duplicates skipped.'''
 
 
 
-PrintSeqLengths.py 
+PropagateNoCoverageChar.py 
 
 ## Overview:
-ExplanatoryMessage = '''This script takes one fasta file as an argument and
-prints the length of each sequence found therein, optionally ignoring gaps.'''
+ExplanatoryMessage = '''This script replaces any "-" character (taken to mean a deletion at this position) that neighbours a "?" character (taken to mean unknown / missing data) by a "?" character, iteratively until no more replacements need to be made. The idea is that a deletion should not be called if it is not known what's next to it. Output is printed to stdout, suitable for redirection to a fasta file.'''
 
 
 
@@ -232,6 +172,15 @@ one sequence therein, from an alignment.'''
 
 
 
+SeqFormatConverter.py 
+
+## Overview:
+ExplanatoryMessage = '''This script converts sequence data between formats; it
+is a simple command-line wrapper for Bio.SeqIO's convert function. Output is
+printed to stdout, suitable for redirection to a file.'''
+
+
+
 SequenceExtractExtractor.py 
 
 ## Overview: run from the command line with one aligned fasta file as an 
@@ -249,19 +198,6 @@ in all fastq.gz files passed as arguments.'''
 
 
 
-TranslateCoords.py 
-
-## Overview: this script translates coordinates with respect to one sequence to
-## coordinates with respect to all other sequences in an alignment.
-## Usage: call it from the command line thus, for reference-based coordinates:
-## ./TranslateCoords.py MyAlignmentFile MyChosenReference coord1 [coord2...]
-## or thus, for alignment-based coordinates:
-## ./TranslateCoords.py MyAlignmentFile -A coord1 [coord2...]
-## The translated coordinates are reported in the order in which they were
-## specified.
-
-
-
 TrimGapsFromSeqEnds.py 
 
 ## Overview:
@@ -276,14 +212,6 @@ TrivialAlign.py
 ## Overview: call this script from the command line with a single fasta file as
 ## an argument, that file containing two sequences. This script moves the
 ## shorter one along the longer one to find the best match.
-
-
-
-UngapFasta.py 
-
-## Overview:
-ExplanatoryMessage = '''This script removes the gap character "-" from sequences
-in a fasta file. Output is printed to stdout.'''
 
 
 
